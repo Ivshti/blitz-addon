@@ -85,7 +85,7 @@ fn get_id_from_article(article: &select::node::Node) -> Option<String> {
         .find(Name("a"))
         .next()?
         .attr("href")
-        .map(|s| s.split("/").skip(3).collect::<Vec<&str>>().join("/"))
+        .map(|s| s.split('/').skip(3).collect::<Vec<&str>>().join("/"))
 }
 
 fn get_poster_from_article(article: &select::node::Node) -> Option<String> {
