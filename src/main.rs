@@ -91,7 +91,7 @@ fn get_id_from_article(article: &select::node::Node) -> Option<String> {
 fn get_poster_from_article(article: &select::node::Node) -> Option<String> {
     let elem = article.find(Name("img")).next()?;
     elem.attr("src")
-        .or(elem.attr("data-original"))
+        .or_else(|| elem.attr("data-original"))
         .map(|s| s.to_owned())
 }
 
