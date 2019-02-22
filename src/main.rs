@@ -20,18 +20,20 @@ lazy_static! {
 const MANIFEST_RAW: &str = include_str!("../manifest.json");
 
 #[get("/manifest.json")]
+//#[response(content_type = "json")]
 fn manifest() -> String {
     MANIFEST_RAW.into()
 }
 
 #[get("/catalog/channel/blitz.json")]
-fn catalog() -> Json<ResourceResponse> {
+fn catalog() -> Option<Json<ResourceResponse>> {
     // @TODO: responder
     // @TODO error handling
-    Json(scrape_blitz(&GENRES[0].0)
+    Some(Json(scrape_blitz(&GENRES[0].0)
         .map(|metas| ResourceResponse::Metas{ metas, has_more: false, skip: 0 })
         // @TODO fix the unwrap
-        .unwrap())
+        .ok()?
+    ))
 }
 
 fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
@@ -45,13 +47,20 @@ fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
         .find(Name("article"))
         .map(|article| MetaPreview{
             id: get_id_from_article(&article).unwrap_or(INVALID_ID.to_owned()),
-            poster: get_poster_from_article(&article),
             type_name: TYPE_STR.to_owned(),
+            poster: get_poster_from_article(&article),
             name: get_name_from_article(&article).unwrap_or("".to_owned()),
             poster_shape: Some(POSTER_SHAPE.to_owned()),
         })
         .collect()
     )
+}
+
+fn get_id_from_article(article: &select::node::Node) -> Option<String> {
+    article.find(Name("a"))
+        .next()?
+        .attr("href")
+        .map(|s| s.split("/").skip(3).collect::<Vec<&str>>().join("/"))
 }
 
 fn get_poster_from_article(article: &select::node::Node) -> Option<String> {
@@ -68,13 +77,6 @@ fn get_name_from_article(article: &select::node::Node) -> Option<String> {
         .to_string())
 }
 
-fn get_id_from_article(article: &select::node::Node) -> Option<String> {
-    article.find(Name("a"))
-        .next()?
-        .attr("href")
-        .map(|s| s.split("/").skip(3).collect::<Vec<&str>>().join("/"))
-}
-
 fn main() {
-        rocket::ignite().mount("/", routes![catalog]).launch();
+    rocket::ignite().mount("/", routes![manifest, catalog]).launch();
 }
