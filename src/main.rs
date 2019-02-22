@@ -80,13 +80,7 @@ fn get_name_from_article(article: &select::node::Node) -> Option<String> {
 }
 
 fn main() {
-    let cors = rocket_cors::CorsOptions {
-        allowed_origins: AllowedOrigins::all(),
-        allowed_methods: vec![Method::Get].into_iter().map(From::from).collect(),
-        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept"]),
-        allow_credentials: true,
-        ..Default::default()
-    }.to_cors().unwrap();
+    let cors = rocket_cors::CorsOptions::default().to_cors().unwrap();
 
     rocket::ignite()
         .mount("/", routes![manifest, catalog])

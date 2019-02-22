@@ -13,7 +13,7 @@ stremio-state-ng = { git = "https://github.com/stremio/stremio-state-ng" }
 rocket_contrib = "*"
 lazy_static = "1.2.x"
 serde_json = "1.x.x"
-rocket_cors = "0.4.0"
+rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master" }
 
 [build-dependencies]
 stremio-state-ng = { git = "https://github.com/stremio/stremio-state-ng" }
