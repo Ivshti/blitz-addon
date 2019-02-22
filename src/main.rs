@@ -7,8 +7,6 @@ use select::document::Document;
 use select::predicate::Name;
 use stremio_state_ng::types::*;
 use lazy_static::*;
-use rocket_cors::{AllowedHeaders, AllowedOrigins};
-use rocket::http::Method;
 
 const TYPE_STR: &str = "channel";
 const BLITZ_BASE: &str = "https://www.blitz.bg";
@@ -47,12 +45,16 @@ fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
 
     Ok(Document::from_read(resp)?
         .find(Name("article"))
-        .map(|article| MetaPreview{
-            id: get_id_from_article(&article).unwrap_or(INVALID_ID.to_owned()),
-            type_name: TYPE_STR.to_owned(),
-            poster: get_poster_from_article(&article),
-            name: get_name_from_article(&article).unwrap_or("".to_owned()),
-            poster_shape: Some(POSTER_SHAPE.to_owned()),
+        .filter_map(|article| {
+            // if we cannot find name, we're probably finding the wrong items
+            let name = get_name_from_article(&article)?;
+            Some(MetaPreview{
+                id: get_id_from_article(&article).unwrap_or(INVALID_ID.to_owned()),
+                type_name: TYPE_STR.to_owned(),
+                poster: Some(get_poster_from_article(&article)?),
+                name,
+                poster_shape: Some(POSTER_SHAPE.to_owned()),
+            })
         })
         .collect()
     )
@@ -66,9 +68,9 @@ fn get_id_from_article(article: &select::node::Node) -> Option<String> {
 }
 
 fn get_poster_from_article(article: &select::node::Node) -> Option<String> {
-    article.find(Name("img"))
-        .next()?
-        .attr("src")
+    let elem = article.find(Name("img")).next()?;
+    elem.attr("src")
+        .or(elem.attr("data-original"))
         .map(|s| s.to_owned())
 }
 
