@@ -7,6 +7,10 @@ build = "build.rs"
 
 [dependencies]
 rocket = "0.4.x"
+reqwest = "0.9.x"
+select = "0.4.x"
+stremio-state-ng = { git = "https://github.com/stremio/stremio-state-ng" }
+rocket_contrib = "*"
 
 [build-dependencies]
 stremio-state-ng = { git = "https://github.com/stremio/stremio-state-ng" }
