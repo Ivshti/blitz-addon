@@ -70,7 +70,7 @@ fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
             // if we cannot find name, we're probably finding the wrong items
             let name = get_name_from_article(&article)?;
             Some(MetaPreview {
-                id: get_id_from_article(&article).unwrap_or(INVALID_ID.to_owned()),
+                id: get_id_from_article(&article).unwrap_or_else(|| INVALID_ID.to_owned()),
                 type_name: TYPE_STR.to_owned(),
                 poster: Some(get_poster_from_article(&article)?),
                 name,
