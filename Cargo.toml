@@ -1,0 +1,13 @@
+[package]
+name = "stremio-addon-blitz"
+version = "0.1.0"
+authors = ["Ivo Georgiev <ivo@strem.io>"]
+edition = "2018"
+build = "build.rs"
+
+[dependencies]
+rocket = "0.4.x"
+
+[build-dependencies]
+stremio-state-ng = { git = "https://github.com/stremio/stremio-state-ng" }
+serde_json = "1.x.x"
