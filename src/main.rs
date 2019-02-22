@@ -6,11 +6,16 @@ use std::error::Error;
 use select::document::Document;
 use select::predicate::Name;
 use stremio_state_ng::types::*;
+use lazy_static::*;
 
 const TYPE_STR: &str = "channel";
 const BLITZ_BASE: &str = "https://www.blitz.bg";
 const INVALID_ID: &str = "blitz-invalid-id";
 const POSTER_SHAPE: &str = "landscape";
+
+lazy_static! {
+    static ref GENRES: Vec<(String, String)> = serde_json::from_str(include_str!("../genres_map.json")).unwrap();
+}
 
 const MANIFEST_RAW: &str = include_str!("../manifest.json");
 
@@ -22,14 +27,15 @@ fn manifest() -> String {
 #[get("/catalog/channel/blitz.json")]
 fn catalog() -> Json<ResourceResponse> {
     // @TODO: responder
-    Json(scrape_blitz()
+    // @TODO error handling
+    Json(scrape_blitz(&GENRES[0].0)
         .map(|metas| ResourceResponse::Metas{ metas, has_more: false, skip: 0 })
         // @TODO fix the unwrap
         .unwrap())
 }
 
-fn scrape_blitz() -> Result<Vec<MetaPreview>, Box<dyn Error>> {
-    let url = format!("{}/{}", BLITZ_BASE, "zdrave");
+fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
+    let url = format!("{}/{}", BLITZ_BASE, genre);
     let resp = reqwest::get(&url)?;
     if !resp.status().is_success() {
         return Err("request was not a success".into());
@@ -41,7 +47,7 @@ fn scrape_blitz() -> Result<Vec<MetaPreview>, Box<dyn Error>> {
             id: get_id_from_article(&article).unwrap_or(INVALID_ID.to_owned()),
             poster: get_poster_from_article(&article),
             type_name: TYPE_STR.to_owned(),
-            name: article.text().trim().to_string(),
+            name: get_name_from_article(&article).unwrap_or("".to_owned()),
             poster_shape: Some(POSTER_SHAPE.to_owned()),
         })
         .collect()
@@ -53,6 +59,13 @@ fn get_poster_from_article(article: &select::node::Node) -> Option<String> {
         .next()?
         .attr("src")
         .map(|s| s.to_owned())
+}
+
+fn get_name_from_article(article: &select::node::Node) -> Option<String> {
+    Some(article.find(Name("h3")).next()?
+        .text()
+        .trim()
+        .to_string())
 }
 
 fn get_id_from_article(article: &select::node::Node) -> Option<String> {
