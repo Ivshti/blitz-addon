@@ -1,12 +1,12 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
+use lazy_static::*;
 use rocket::*;
 use rocket_contrib::json::Json;
-use std::error::Error;
 use select::document::Document;
 use select::predicate::Name;
+use std::error::Error;
 use stremio_state_ng::types::*;
-use lazy_static::*;
 
 const TYPE_STR: &str = "channel";
 const BLITZ_BASE: &str = "https://www.blitz.bg";
@@ -14,7 +14,8 @@ const INVALID_ID: &str = "blitz-invalid-id";
 const POSTER_SHAPE: &str = "landscape";
 
 lazy_static! {
-    static ref GENRES: Vec<(String, String)> = serde_json::from_str(include_str!("../genres_map.json")).unwrap();
+    static ref GENRES: Vec<(String, String)> =
+        serde_json::from_str(include_str!("../genres_map.json")).unwrap();
 }
 
 const MANIFEST_RAW: &str = include_str!("../manifest.json");
@@ -28,10 +29,15 @@ fn manifest() -> String {
 #[get("/catalog/channel/blitz.json")]
 fn catalog() -> Option<Json<ResourceResponse>> {
     // @TODO error handling
-    Some(Json(scrape_blitz(&GENRES[0].0)
-        .map(|metas| ResourceResponse::Metas{ metas, has_more: false, skip: 0 })
-        // @TODO fix the unwrap
-        .ok()?
+    Some(Json(
+        scrape_blitz(&GENRES[0].0)
+            .map(|metas| ResourceResponse::Metas {
+                metas,
+                has_more: false,
+                skip: 0,
+            })
+            // @TODO fix the unwrap
+            .ok()?,
     ))
 }
 
@@ -39,13 +45,17 @@ fn catalog() -> Option<Json<ResourceResponse>> {
 fn catalog_genre(genre: String) -> Option<Json<ResourceResponse>> {
     // @TODO from name
     let genre = GENRES.iter().find(|(id, _)| id == &genre)?;
-    Some(Json(scrape_blitz(&genre.0)
-        .map(|metas| ResourceResponse::Metas{ metas, has_more: false, skip: 0 })
-        // @TODO fix the unwrap
-        .ok()?
+    Some(Json(
+        scrape_blitz(&genre.0)
+            .map(|metas| ResourceResponse::Metas {
+                metas,
+                has_more: false,
+                skip: 0,
+            })
+            // @TODO fix the unwrap
+            .ok()?,
     ))
 }
-
 
 fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
     let url = format!("{}/{}", BLITZ_BASE, genre);
@@ -59,7 +69,7 @@ fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
         .filter_map(|article| {
             // if we cannot find name, we're probably finding the wrong items
             let name = get_name_from_article(&article)?;
-            Some(MetaPreview{
+            Some(MetaPreview {
                 id: get_id_from_article(&article).unwrap_or(INVALID_ID.to_owned()),
                 type_name: TYPE_STR.to_owned(),
                 poster: Some(get_poster_from_article(&article)?),
@@ -67,12 +77,12 @@ fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
                 poster_shape: Some(POSTER_SHAPE.to_owned()),
             })
         })
-        .collect()
-    )
+        .collect())
 }
 
 fn get_id_from_article(article: &select::node::Node) -> Option<String> {
-    article.find(Name("a"))
+    article
+        .find(Name("a"))
         .next()?
         .attr("href")
         .map(|s| s.split("/").skip(3).collect::<Vec<&str>>().join("/"))
@@ -86,10 +96,7 @@ fn get_poster_from_article(article: &select::node::Node) -> Option<String> {
 }
 
 fn get_name_from_article(article: &select::node::Node) -> Option<String> {
-    Some(article.find(Name("h3")).next()?
-        .text()
-        .trim()
-        .to_string())
+    Some(article.find(Name("h3")).next()?.text().trim().to_string())
 }
 
 fn main() {
