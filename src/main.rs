@@ -7,6 +7,8 @@ use select::document::Document;
 use select::predicate::Name;
 use stremio_state_ng::types::*;
 use lazy_static::*;
+use rocket_cors::{AllowedHeaders, AllowedOrigins};
+use rocket::http::Method;
 
 const TYPE_STR: &str = "channel";
 const BLITZ_BASE: &str = "https://www.blitz.bg";
@@ -78,5 +80,16 @@ fn get_name_from_article(article: &select::node::Node) -> Option<String> {
 }
 
 fn main() {
-    rocket::ignite().mount("/", routes![manifest, catalog]).launch();
+    let cors = rocket_cors::CorsOptions {
+        allowed_origins: AllowedOrigins::all(),
+        allowed_methods: vec![Method::Get].into_iter().map(From::from).collect(),
+        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept"]),
+        allow_credentials: true,
+        ..Default::default()
+    }.to_cors().unwrap();
+
+    rocket::ignite()
+        .mount("/", routes![manifest, catalog])
+        .attach(cors)
+        .launch();
 }
