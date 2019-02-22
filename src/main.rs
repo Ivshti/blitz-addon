@@ -27,7 +27,6 @@ fn manifest() -> String {
 
 #[get("/catalog/channel/blitz.json")]
 fn catalog() -> Option<Json<ResourceResponse>> {
-    // @TODO: responder
     // @TODO error handling
     Some(Json(scrape_blitz(&GENRES[0].0)
         .map(|metas| ResourceResponse::Metas{ metas, has_more: false, skip: 0 })
@@ -35,6 +34,18 @@ fn catalog() -> Option<Json<ResourceResponse>> {
         .ok()?
     ))
 }
+
+#[get("/catalog/channel/blitz/<genre>")]
+fn catalog_genre(genre: String) -> Option<Json<ResourceResponse>> {
+    // @TODO from name
+    let genre = GENRES.iter().find(|(id, _)| id == &genre)?;
+    Some(Json(scrape_blitz(&genre.0)
+        .map(|metas| ResourceResponse::Metas{ metas, has_more: false, skip: 0 })
+        // @TODO fix the unwrap
+        .ok()?
+    ))
+}
+
 
 fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
     let url = format!("{}/{}", BLITZ_BASE, genre);
@@ -85,7 +96,7 @@ fn main() {
     let cors = rocket_cors::CorsOptions::default().to_cors().unwrap();
 
     rocket::ignite()
-        .mount("/", routes![manifest, catalog])
+        .mount("/", routes![manifest, catalog, catalog_genre])
         .attach(cors)
         .launch();
 }

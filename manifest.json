@@ -1,7 +1,7 @@
 {
 	"name": "Blitz.bg",
 	"id": "org.stremio.blitz",
-	"resources": [],
+	"resources": ["catalog","meta"],
 	"types": ["channel"],
 	"catalogs": [{ "type": "channel", "id": "blitz" }],
 	"version": "0.0.1"
