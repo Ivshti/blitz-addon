@@ -6,8 +6,8 @@ use rocket_contrib::json::Json;
 use select::document::Document;
 use select::predicate::Name;
 use std::error::Error;
-use stremio_core::types::*;
 use stremio_core::types::addons::*;
+use stremio_core::types::*;
 
 const TYPE_STR: &str = "channel";
 const BLITZ_BASE: &str = "https://www.blitz.bg";
@@ -43,9 +43,7 @@ fn catalog_genre(genre: String) -> Option<Json<ResourceResponse>> {
     let genre = GENRES.iter().find(|(id, _)| id == &genre)?;
     Some(Json(
         scrape_blitz(&genre.0)
-            .map(|metas| ResourceResponse::Metas {
-                metas,
-            })
+            .map(|metas| ResourceResponse::Metas { metas })
             // @TODO fix the unwrap
             .ok()?,
     ))
