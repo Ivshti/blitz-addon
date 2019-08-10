@@ -6,12 +6,12 @@ use rocket_contrib::json::Json;
 use select::document::Document;
 use select::predicate::Name;
 use std::error::Error;
-use stremio_state_ng::types::*;
+use stremio_core::types::*;
+use stremio_core::types::addons::*;
 
 const TYPE_STR: &str = "channel";
 const BLITZ_BASE: &str = "https://www.blitz.bg";
 const INVALID_ID: &str = "blitz-invalid-id";
-const POSTER_SHAPE: &str = "landscape";
 
 lazy_static! {
     static ref GENRES: Vec<(String, String)> =
@@ -31,11 +31,7 @@ fn catalog() -> Option<Json<ResourceResponse>> {
     // @TODO error handling
     Some(Json(
         scrape_blitz(&GENRES[0].0)
-            .map(|metas| ResourceResponse::Metas {
-                metas,
-                has_more: false,
-                skip: 0,
-            })
+            .map(|metas| ResourceResponse::Metas { metas })
             // @TODO fix the unwrap
             .ok()?,
     ))
@@ -49,8 +45,6 @@ fn catalog_genre(genre: String) -> Option<Json<ResourceResponse>> {
         scrape_blitz(&genre.0)
             .map(|metas| ResourceResponse::Metas {
                 metas,
-                has_more: false,
-                skip: 0,
             })
             // @TODO fix the unwrap
             .ok()?,
@@ -74,7 +68,7 @@ fn scrape_blitz(genre: &str) -> Result<Vec<MetaPreview>, Box<dyn Error>> {
                 type_name: TYPE_STR.to_owned(),
                 poster: Some(get_poster_from_article(&article)?),
                 name,
-                poster_shape: Some(POSTER_SHAPE.to_owned()),
+                poster_shape: PosterShape::Landscape,
             })
         })
         .collect())
